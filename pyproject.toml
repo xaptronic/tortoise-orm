@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tortoise-orm"
-version = "0.23.0"
+version = "0.24.0"
 description = "Easy async ORM for python, built with relations in mind"
 authors = ["Andrey Bondar <andrey@bondar.ru>", "Nickolas Grigoriadis <nagrigoriadis@gmail.com>", "long2ice <long2ice@gmail.com>"]
 license = "Apache-2.0"
@@ -18,7 +18,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -36,7 +35,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 pypika-tortoise = "^0.5.0"
 iso8601 = "^2.1.0"
 aiosqlite = ">=0.16.0, <0.21.0"
@@ -50,7 +49,7 @@ asyncmy = { version = "^0.2.8", optional = true, allow-prereleases = true }
 psycopg = { extras = ["pool", "binary"], version = "^3.0.12", optional = true }
 asyncodbc = { version = "^0.1.1", optional = true }
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 # Linter tools
 mypy = "*"
 ruff = "*"
@@ -64,7 +63,7 @@ coveralls = "*"
 pytest = "*"
 pytest-xdist = "*"
 pytest-cov = "*"
-pytest-codspeed = { version = "*", python = "^3.9" }
+pytest-codspeed = "*"
 # Pypi
 twine = "*"
 # Sample integration - Quart
@@ -82,8 +81,8 @@ httpx = "*"
 # Aiohttp support
 aiohttp = "*"
 # BlackSheep support
-blacksheep = {version = "^2.0.7", python = "<3.13"}
-pytest-asyncio = "^0.24.0"
+blacksheep = "^2.0.8"
+pytest-asyncio = ">=0.24.0"
 # mypy
 types-PyYAML = "*"
 types-pytz = "*"
@@ -111,11 +110,12 @@ profile = "black"
 
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py39", "py310", "py311", "py312", "py313"]
 
 [tool.mypy]
 pretty = true
 exclude = ["docs"]
+python_version = "3.9"
 ignore_missing_imports = true
 check_untyped_defs = true
 disallow_subclassing_any = true
@@ -154,16 +154,6 @@ check_untyped_defs = true
 disallow_untyped_calls = true
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
-
-[[tool.mypy.overrides]]
-module = "examples.blacksheep.*"
-# TODO: remove this override when blacksheep support python3.13
-disallow_untyped_decorators = false
-
-[[tool.mypy.overrides]]
-module = "tortoise.contrib.blacksheep.*"
-# TODO: remove this override when blacksheep support python3.13
-disallow_untyped_decorators = false
 
 [[tool.mypy.overrides]]
 module = "tortoise.contrib.test.*"

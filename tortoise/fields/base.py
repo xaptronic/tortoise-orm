@@ -1,20 +1,8 @@
 import sys
 import warnings
+from collections.abc import Callable
 from enum import Enum
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar, Union, overload
 
 from pypika_tortoise.terms import Term
 
@@ -52,7 +40,7 @@ NO_ACTION = OnDelete.NO_ACTION
 
 class _FieldMeta(type):
     # TODO: Require functions to return field instances instead of this hack
-    def __new__(mcs, name: str, bases: Tuple[Type, ...], attrs: dict) -> type:
+    def __new__(mcs, name: str, bases: tuple[type, ...], attrs: dict) -> type:
         if len(bases) > 1 and bases[0] is Field:
             # Instantiate class with only the 1st base class (should be Field)
             cls = type.__new__(mcs, name, (bases[0],), attrs)
@@ -85,7 +73,7 @@ class Field(Generic[VALUE], metaclass=_FieldMeta):
     These attributes needs to be defined when defining an actual field type.
 
     .. attribute:: field_type
-        :annotation: Type[Any]
+        :annotation: type[Any]
 
         The Python type the field is.
         If adding a type as a mixin, _FieldMeta will automatically set this to that.
@@ -149,7 +137,7 @@ class Field(Generic[VALUE], metaclass=_FieldMeta):
     """
 
     # Field_type is a readonly property for the instance, it is set by _FieldMeta
-    field_type: Type[Any] = None  # type: ignore
+    field_type: type[Any] = None  # type: ignore
     indexable: bool = True
     has_db_field: bool = True
     skip_to_python_if_native: bool = False
@@ -165,13 +153,13 @@ class Field(Generic[VALUE], metaclass=_FieldMeta):
             return super().__new__(cls)
 
         @overload
-        def __get__(self, instance: None, owner: Type["Model"]) -> "Field[VALUE]": ...
+        def __get__(self, instance: None, owner: type["Model"]) -> "Field[VALUE]": ...
 
         @overload
-        def __get__(self, instance: "Model", owner: Type["Model"]) -> VALUE: ...
+        def __get__(self, instance: "Model", owner: type["Model"]) -> VALUE: ...
 
         def __get__(
-            self, instance: Optional["Model"], owner: Type["Model"]
+            self, instance: Optional["Model"], owner: type["Model"]
         ) -> "Field[VALUE] | VALUE": ...
 
         def __set__(self, instance: "Model", value: VALUE) -> None: ...
@@ -187,7 +175,7 @@ class Field(Generic[VALUE], metaclass=_FieldMeta):
         db_index: Optional[bool] = None,
         description: Optional[str] = None,
         model: "Optional[Model]" = None,
-        validators: Optional[List[Union[Validator, Callable]]] = None,
+        validators: Optional[list[Union[Validator, Callable]]] = None,
         **kwargs: Any,
     ) -> None:
         if (index := kwargs.pop("index", None)) is not None:
@@ -238,12 +226,12 @@ class Field(Generic[VALUE], metaclass=_FieldMeta):
         self.model_field_name = ""
         self.description = description
         self.docstring: Optional[str] = None
-        self.validators: List[Union[Validator, Callable]] = validators or []
+        self.validators: list[Union[Validator, Callable]] = validators or []
         # TODO: consider making this not be set from constructor
-        self.model: Type["Model"] = model  # type: ignore
+        self.model: type["Model"] = model  # type: ignore
         self.reference: "Optional[Field]" = None
 
-    def to_db_value(self, value: Any, instance: "Union[Type[Model], Model]") -> Any:
+    def to_db_value(self, value: Any, instance: "Union[type[Model], Model]") -> Any:
         """
         Converts from the Python type to the DB type.
 
@@ -306,22 +294,30 @@ class Field(Generic[VALUE], metaclass=_FieldMeta):
         """
         return {}
 
-    def _get_dialects(self) -> Dict[str, dict]:
+    def _get_dialects(self) -> dict[str, dict]:
         ret = {}
-        for dialect in [key for key in dir(self) if key.startswith("_db_")]:
-            item = {}
+        for dialect in dir(self):
+            if not dialect.startswith("_db_"):
+                continue
             cls = getattr(self, dialect)
+            d = cls.__dict__
             try:
-                cls = cls(self)
+                obj = cls(self)
             except TypeError:
                 pass
-            for key, val in cls.__dict__.items():
-                if not key.startswith("_"):
-                    item[key] = val
-            ret[dialect[4:]] = item
+            else:
+                props = {
+                    prop: getattr(obj, prop)
+                    for prop in dir(cls)
+                    if isinstance(getattr(cls, prop), property)
+                }
+                d = {**d, **props}
+
+            ret[dialect[4:]] = {k: v for k, v in d.items() if not k.startswith("_")}
+
         return ret
 
-    def get_db_field_types(self) -> Optional[Dict[str, str]]:
+    def get_db_field_types(self) -> Optional[dict[str, str]]:
         """
         Returns the DB types for this field.
 
@@ -330,12 +326,17 @@ class Field(Generic[VALUE], metaclass=_FieldMeta):
         """
         if not self.has_db_field:  # pragma: nocoverage
             return None
+        default = getattr(self, "SQL_TYPE")
         return {
-            "": getattr(self, "SQL_TYPE"),
+            "": default,
             **{
-                dialect: _db["SQL_TYPE"]
-                for dialect, _db in self._get_dialects().items()
-                if "SQL_TYPE" in _db
+                dialect: sql_type
+                for dialect, sql_type in (
+                    (key[4:], self.get_for_dialect(key[4:], "SQL_TYPE"))
+                    for key in dir(self)
+                    if key.startswith("_db_")
+                )
+                if sql_type != default
             },
         }
 
@@ -346,8 +347,19 @@ class Field(Generic[VALUE], metaclass=_FieldMeta):
         :param dialect: The requested SQL Dialect.
         :param key: The attribute/method name.
         """
-        dialect_data = self._get_dialects().get(dialect, {})
-        return dialect_data.get(key, getattr(self, key, None))
+        try:
+            dialect_cls = getattr(self, f"_db_{dialect}")  # throws AttributeError if not present
+            dialect_value = getattr(dialect_cls, key)  # throws AttributeError if not present
+        except AttributeError:
+            pass
+        else:  # we have dialect_cls and dialect_value, so lets use it
+            # it could be that dialect_value is a computed property, like in CharField._db_oracle.SQL_TYPE,
+            # and therefore one first needs to instantiate dialect_cls
+            if isinstance(dialect_value, property):
+                return getattr(dialect_cls(self), key)
+            return dialect_value
+        # If there is nothing special defined, return the value of self
+        return getattr(self, key, None)
 
     def describe(self, serializable: bool) -> dict:
         """
@@ -394,14 +406,14 @@ class Field(Generic[VALUE], metaclass=_FieldMeta):
                 }
         """
 
-        def _type_name(typ: Type) -> str:
+        def _type_name(typ: type) -> str:
             if typ.__module__ == "builtins":
                 return typ.__name__
             if typ.__module__ == "typing":
                 return str(typ).replace("typing.", "")
             return f"{typ.__module__}.{typ.__name__}"
 
-        def type_name(typ: Any) -> Union[str, List[str]]:
+        def type_name(typ: Any) -> Union[str, list[str]]:
             try:
                 return typ._meta.full_name
             except (AttributeError, TypeError):

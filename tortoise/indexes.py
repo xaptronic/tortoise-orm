@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any
 
+from pypika_tortoise.context import DEFAULT_SQL_CONTEXT
 from pypika_tortoise.terms import Term, ValueWrapper
 
+from tortoise.exceptions import ConfigurationError
+
 if TYPE_CHECKING:
-    from tortoise import Model
     from tortoise.backends.base.schema_generator import BaseSchemaGenerator
+    from tortoise.models import Model
 
 
 class Index:
     INDEX_TYPE = ""
-    INDEX_CREATE_TEMPLATE = (
-        "CREATE{index_type}INDEX {exists}{index_name} ON {table_name} ({fields}){extra};"
-    )
 
     def __init__(
         self,
@@ -31,14 +31,55 @@ class Index:
         """
         self.fields = list(fields or [])
         if not expressions and not fields:
-            raise ValueError("At least one field or expression is required to define an " "index.")
+            raise ConfigurationError(
+                "At least one field or expression is required to define an " "index."
+            )
         if expressions and fields:
-            raise ValueError(
+            raise ConfigurationError(
                 "Index.fields and expressions are mutually exclusive.",
             )
         self.name = name
         self.expressions = expressions
         self.extra = ""
+
+    def describe(self) -> dict:
+        return {
+            "fields": self.fields,
+            "expressions": [str(expression) for expression in self.expressions],
+            "name": self.name,
+            "type": self.INDEX_TYPE,
+            "extra": self.extra,
+        }
+
+    def index_name(self, schema_generator: "BaseSchemaGenerator", model: "type[Model]") -> str:
+        # This function is required by aerich
+        return self.name or schema_generator._generate_index_name("idx", model, self.field_names)
+
+    def get_sql(
+        self, schema_generator: "BaseSchemaGenerator", model: "type[Model]", safe: bool
+    ) -> str:
+        # This function is required by aerich
+        return schema_generator._get_index_sql(
+            model,
+            self.field_names,
+            safe,
+            index_name=self.name,
+            index_type=self.INDEX_TYPE,
+            extra=self.extra,
+        )
+
+    @property
+    def field_names(self) -> list[str]:
+        if self.fields:
+            return list(self.fields)
+        elif self.expressions:
+            return [
+                f"({expression.get_sql(DEFAULT_SQL_CONTEXT)})" for expression in self.expressions
+            ]
+        else:
+            raise ConfigurationError(
+                "At least one field or expression is required to define an index."
+            )
 
     def __repr__(self) -> str:
         argument = ""
@@ -49,28 +90,6 @@ class Index:
         if name := self.name:
             argument += f", {name=}"
         return self.__class__.__name__ + "(" + argument + ")"
-
-    def get_sql(
-        self, schema_generator: "BaseSchemaGenerator", model: "Type[Model]", safe: bool
-    ) -> str:
-        if self.fields:
-            fields = ", ".join(schema_generator.quote(f) for f in self.fields)
-        else:
-            ctx = schema_generator.client.query_class.SQL_CONTEXT
-            expressions = [f"({expression.get_sql(ctx)})" for expression in self.expressions]
-            fields = ", ".join(expressions)
-
-        return self.INDEX_CREATE_TEMPLATE.format(
-            exists="IF NOT EXISTS " if safe else "",
-            index_name=schema_generator.quote(self.index_name(schema_generator, model)),
-            index_type=f" {self.INDEX_TYPE} ",
-            table_name=schema_generator.quote(model._meta.db_table),
-            fields=fields,
-            extra=self.extra,
-        )
-
-    def index_name(self, schema_generator: "BaseSchemaGenerator", model: "Type[Model]") -> str:
-        return self.name or schema_generator._generate_index_name("idx", model, self.fields)
 
     def __hash__(self) -> int:
         return hash((tuple(self.fields), self.name, tuple(self.expressions)))

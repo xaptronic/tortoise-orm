@@ -5,6 +5,7 @@ from typing import Union
 from tests.testmodels import (
     Event,
     JSONFields,
+    ModelWithIndexes,
     Reporter,
     SourceFields,
     StraightFields,
@@ -170,7 +171,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "chars",
                         "field_type": "CharField",
                         "db_column": "chars",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": "str",
                         "generated": False,
                         "nullable": False,
@@ -185,7 +189,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "blip",
                         "field_type": "CharField",
                         "db_column": "blip",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": "str",
                         "generated": False,
                         "nullable": False,
@@ -200,7 +207,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "nullable",
                         "field_type": "CharField",
                         "db_column": "nullable",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": "str",
                         "generated": False,
                         "nullable": True,
@@ -390,7 +400,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "chars",
                         "field_type": fields.CharField,
                         "db_column": "chars",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": str,
                         "generated": False,
                         "nullable": False,
@@ -405,7 +418,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "blip",
                         "field_type": fields.CharField,
                         "db_column": "blip",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": str,
                         "generated": False,
                         "nullable": False,
@@ -420,7 +436,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "nullable",
                         "field_type": fields.CharField,
                         "db_column": "nullable",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": str,
                         "generated": False,
                         "nullable": True,
@@ -610,7 +629,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "chars",
                         "field_type": "CharField",
                         "db_column": "some_chars_table",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": "str",
                         "generated": False,
                         "nullable": False,
@@ -625,7 +647,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "blip",
                         "field_type": "CharField",
                         "db_column": "da_blip",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": "str",
                         "generated": False,
                         "nullable": False,
@@ -640,7 +665,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "nullable",
                         "field_type": "CharField",
                         "db_column": "some_nullable",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": "str",
                         "generated": False,
                         "nullable": True,
@@ -830,7 +858,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "chars",
                         "field_type": fields.CharField,
                         "db_column": "some_chars_table",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": str,
                         "generated": False,
                         "nullable": False,
@@ -845,7 +876,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "blip",
                         "field_type": fields.CharField,
                         "db_column": "da_blip",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": str,
                         "generated": False,
                         "nullable": False,
@@ -860,7 +894,10 @@ class TestDescribeModel(test.SimpleTestCase):
                         "name": "nullable",
                         "field_type": fields.CharField,
                         "db_column": "some_nullable",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "python_type": str,
                         "generated": False,
                         "nullable": True,
@@ -1179,7 +1216,10 @@ class TestDescribeModel(test.SimpleTestCase):
                 "data_fields": [
                     {
                         "db_column": "name",
-                        "db_field_types": {"": "VARCHAR(50)"},
+                        "db_field_types": {
+                            "": "VARCHAR(50)",
+                            "oracle": "NVARCHAR2(50)",
+                        },
                         "default": None,
                         "description": None,
                         "docstring": None,
@@ -1560,4 +1600,29 @@ class TestDescribeModel(test.SimpleTestCase):
                 "backward_o2o_fields": [],
                 "m2m_fields": [],
             },
+        )
+
+    def test_describe_indexes_serializable(self):
+        val = ModelWithIndexes.describe()
+
+        self.assertEqual(
+            val["indexes"],
+            [
+                {"fields": ["f1", "f2"], "expressions": [], "name": None, "type": "", "extra": ""},
+                {
+                    "fields": ["f3"],
+                    "expressions": [],
+                    "name": "model_with_indexes__f3",
+                    "type": "",
+                    "extra": "",
+                },
+            ],
+        )
+
+    def test_describe_indexes_not_serializable(self):
+        val = ModelWithIndexes.describe(serializable=False)
+
+        self.assertEqual(
+            val["indexes"],
+            ModelWithIndexes._meta.indexes,
         )

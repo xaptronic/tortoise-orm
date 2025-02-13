@@ -1,6 +1,6 @@
 # pylint: disable=E0611,E0401
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from config import register_orm
 from fastapi import FastAPI
@@ -14,6 +14,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         app,
         use_tz=False,
         timezone="Asia/Shanghai",
+        add_exception_handlers=True,
     ):
         # db connected
         yield

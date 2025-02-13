@@ -1,20 +1,9 @@
 import abc
 import asyncio
 from asyncio.events import AbstractEventLoop
+from collections.abc import Callable, Coroutine
 from functools import wraps
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Coroutine,
-    List,
-    Optional,
-    SupportsInt,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Optional, SupportsInt, TypeVar, Union
 
 from pypika_tortoise import PostgreSQLQuery
 
@@ -50,9 +39,9 @@ class BasePostgresPool:
 
 class BasePostgresClient(BaseDBAsyncClient, abc.ABC):
     DSN_TEMPLATE = "postgres://{user}:{password}@{host}:{port}/{database}"
-    query_class: Type[PostgreSQLQuery] = PostgreSQLQuery
-    executor_class: Type[BasePostgresExecutor] = BasePostgresExecutor
-    schema_generator: Type[BasePostgresSchemaGenerator] = BasePostgresSchemaGenerator
+    query_class: type[PostgreSQLQuery] = PostgreSQLQuery
+    executor_class: type[BasePostgresExecutor] = BasePostgresExecutor
+    schema_generator: type[BasePostgresSchemaGenerator] = BasePostgresSchemaGenerator
     capabilities = Capabilities(
         "postgres", support_update_limit_order_by=False, support_for_posix_regex_queries=True
     )
@@ -149,11 +138,11 @@ class BasePostgresClient(BaseDBAsyncClient, abc.ABC):
     @abc.abstractmethod
     async def execute_query(
         self, query: str, values: Optional[list] = None
-    ) -> Tuple[int, List[dict]]:
+    ) -> tuple[int, list[dict]]:
         raise NotImplementedError("execute_query is not implemented")
 
     @abc.abstractmethod
-    async def execute_query_dict(self, query: str, values: Optional[list] = None) -> List[dict]:
+    async def execute_query_dict(self, query: str, values: Optional[list] = None) -> list[dict]:
         raise NotImplementedError("execute_query_dict is not implemented")
 
     @translate_exceptions

@@ -2,18 +2,8 @@ from __future__ import annotations
 
 import abc
 import asyncio
-from typing import (
-    Any,
-    Generic,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from collections.abc import Sequence
+from typing import Any, Generic, TypeVar, cast
 
 from pypika_tortoise import Query
 
@@ -95,17 +85,17 @@ class BaseDBAsyncClient(abc.ABC):
     Parameters get passed as kwargs, and is mostly driver specific.
 
     .. attribute:: query_class
-        :annotation: Type[pypika_tortoise.Query]
+        :annotation: type[pypika_tortoise.Query]
 
         The PyPika Query dialect (low level dialect)
 
     .. attribute:: executor_class
-        :annotation: Type[BaseExecutor]
+        :annotation: type[BaseExecutor]
 
         The executor dialect class (high level dialect)
 
     .. attribute:: schema_generator
-        :annotation: Type[BaseSchemaGenerator]
+        :annotation: type[BaseSchemaGenerator]
 
         The DDL schema generator
 
@@ -119,9 +109,9 @@ class BaseDBAsyncClient(abc.ABC):
     _parent: "BaseDBAsyncClient"
     _pool: Any
     connection_name: str
-    query_class: Type[Query] = Query
-    executor_class: Type[BaseExecutor] = BaseExecutor
-    schema_generator: Type[BaseSchemaGenerator] = BaseSchemaGenerator
+    query_class: type[Query] = Query
+    executor_class: type[BaseExecutor] = BaseExecutor
+    schema_generator: type[BaseSchemaGenerator] = BaseSchemaGenerator
     capabilities: Capabilities = Capabilities("")
 
     def __init__(self, connection_name: str, fetch_inserted: bool = True, **kwargs: Any) -> None:
@@ -164,7 +154,7 @@ class BaseDBAsyncClient(abc.ABC):
         """
         raise NotImplementedError()  # pragma: nocoverage
 
-    def acquire_connection(self) -> Union["ConnectionWrapper", "PoolConnectionWrapper"]:
+    def acquire_connection(self) -> "ConnectionWrapper" | "PoolConnectionWrapper":
         """
         Acquires a connection from the pool.
         Will return the current context connection if already in a transaction.
@@ -186,8 +176,8 @@ class BaseDBAsyncClient(abc.ABC):
         raise NotImplementedError()  # pragma: nocoverage
 
     async def execute_query(
-        self, query: str, values: Optional[list] = None
-    ) -> Tuple[int, Sequence[dict]]:
+        self, query: str, values: list | None = None
+    ) -> tuple[int, Sequence[dict]]:
         """
         Executes a RAW SQL query statement, and returns the resultset.
 
@@ -206,7 +196,7 @@ class BaseDBAsyncClient(abc.ABC):
         """
         raise NotImplementedError()  # pragma: nocoverage
 
-    async def execute_many(self, query: str, values: List[list]) -> None:
+    async def execute_many(self, query: str, values: list[list]) -> None:
         """
         Executes a RAW bulk insert statement, like execute_insert, but returns no data.
 
@@ -215,7 +205,7 @@ class BaseDBAsyncClient(abc.ABC):
         """
         raise NotImplementedError()  # pragma: nocoverage
 
-    async def execute_query_dict(self, query: str, values: Optional[list] = None) -> List[dict]:
+    async def execute_query_dict(self, query: str, values: list | None = None) -> list[dict]:
         """
         Executes a RAW SQL query statement, and returns the resultset as a list of dicts.
 
@@ -356,7 +346,7 @@ class PoolConnectionWrapper(Generic[T_conn]):
 
     def __init__(self, client: BaseDBAsyncClient, pool_init_lock: asyncio.Lock) -> None:
         self.client = client
-        self.connection: Optional[T_conn] = None
+        self.connection: T_conn | None = None
         self._pool_init_lock = pool_init_lock
 
     async def ensure_connection(self) -> None:

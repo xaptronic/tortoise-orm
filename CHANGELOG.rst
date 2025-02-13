@@ -6,17 +6,33 @@ Changelog
 
 .. rst-class:: emphasize-children
 
+0.25
+====
+
+0.25.0 (unreleased)
+------
+Fixed
+^^^^^
+- Fixed asyncio "no current event loop" deprecation warning by replacing `asyncio.get_event_loop()` with modern event loop handling using `get_running_loop()` with fallback to `new_event_loop()` (#1865)
+
+Changed
+^^^^^^^
+- add benchmarks for `get_for_dialect` (#1862)
+
 0.24
 ====
 
-0.24.0 (unreleased)
+0.24.0
 ------
 Fixed
 ^^^^^
 - Rename pypika to pypika_tortoise for fixing package name conflict (#1829)
 - Concurrent connection pool initialization (#1825)
+- `_get_dialects`: support properties (#1859)
+
 Changed
 ^^^^^^^
+- Drop support for Python3.8 (#1848)
 - Optimize field conversion to database format to speed up `create` and `bulk_create` (#1840)
 - Improved query performance by optimizing SQL generation (#1837)
 

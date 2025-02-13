@@ -1,21 +1,16 @@
+from collections.abc import AsyncGenerator, Generator, Iterator
 from typing import (
     TYPE_CHECKING,
     Any,
-    AsyncGenerator,
-    Generator,
     Generic,
-    Iterator,
-    List,
+    Literal,
     Optional,
-    Tuple,
-    Type,
     TypeVar,
     Union,
     overload,
 )
 
 from pypika_tortoise import Table
-from typing_extensions import Literal
 
 from tortoise.exceptions import ConfigurationError, NoValuesFetched, OperationalError
 from tortoise.fields.base import CASCADE, SET_NULL, Field, OnDelete
@@ -48,7 +43,7 @@ class ReverseRelation(Generic[MODEL]):
 
     def __init__(
         self,
-        remote_model: Type[MODEL],
+        remote_model: type[MODEL],
         relation_field: str,
         instance: "Model",
         from_field: str,
@@ -59,7 +54,7 @@ class ReverseRelation(Generic[MODEL]):
         self.from_field = from_field
         self._fetched = False
         self._custom_query = False
-        self.related_objects: List[MODEL] = []
+        self.related_objects: list[MODEL] = []
 
     @property
     def _query(self) -> "QuerySet[MODEL]":
@@ -91,7 +86,7 @@ class ReverseRelation(Generic[MODEL]):
         self._raise_if_not_fetched()
         return self.related_objects[item]
 
-    def __await__(self) -> Generator[Any, None, List[MODEL]]:
+    def __await__(self) -> Generator[Any, None, list[MODEL]]:
         return self._query.__await__()
 
     async def __aiter__(self) -> AsyncGenerator[Any, MODEL]:
@@ -130,7 +125,7 @@ class ReverseRelation(Generic[MODEL]):
         """
         return self._query.offset(offset)
 
-    def _set_result_for_query(self, sequence: List[MODEL], attr: Optional[str] = None) -> None:
+    def _set_result_for_query(self, sequence: list[MODEL], attr: Optional[str] = None) -> None:
         self._fetched = True
         self.related_objects = sequence
         if attr:
@@ -218,7 +213,7 @@ class ManyToManyRelation(ReverseRelation[MODEL]):
 
     async def _remove_or_clear(
         self,
-        instances: Optional[Tuple[MODEL, ...]] = None,
+        instances: Optional[tuple[MODEL, ...]] = None,
         using_db: "Optional[BaseDBAsyncClient]" = None,
     ) -> None:
         db = using_db or self.remote_model._meta.db
@@ -247,13 +242,13 @@ class RelationalField(Field[MODEL]):
 
     def __init__(
         self,
-        related_model: "Type[MODEL]",
+        related_model: "type[MODEL]",
         to_field: Optional[str] = None,
         db_constraint: bool = True,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        self.related_model: "Type[MODEL]" = related_model
+        self.related_model: "type[MODEL]" = related_model
         self.to_field: str = to_field  # type: ignore
         self.to_field_instance: Field = None  # type: ignore
         self.db_constraint = db_constraint
@@ -261,13 +256,13 @@ class RelationalField(Field[MODEL]):
     if TYPE_CHECKING:
 
         @overload
-        def __get__(self, instance: None, owner: Type["Model"]) -> "RelationalField[MODEL]": ...
+        def __get__(self, instance: None, owner: type["Model"]) -> "RelationalField[MODEL]": ...
 
         @overload
-        def __get__(self, instance: "Model", owner: Type["Model"]) -> MODEL: ...
+        def __get__(self, instance: "Model", owner: type["Model"]) -> MODEL: ...
 
         def __get__(
-            self, instance: Optional["Model"], owner: Type["Model"]
+            self, instance: Optional["Model"], owner: type["Model"]
         ) -> "RelationalField[MODEL] | MODEL": ...
 
         def __set__(self, instance: "Model", value: MODEL) -> None: ...
@@ -315,7 +310,7 @@ class ForeignKeyFieldInstance(RelationalField[MODEL]):
 class BackwardFKRelation(RelationalField[MODEL]):
     def __init__(
         self,
-        field_type: "Type[MODEL]",
+        field_type: "type[MODEL]",
         relation_field: str,
         relation_source_field: str,
         null: bool,
@@ -355,7 +350,7 @@ class ManyToManyFieldInstance(RelationalField[MODEL]):
         backward_key: str = "",
         related_name: str = "",
         on_delete: OnDelete = CASCADE,
-        field_type: "Type[MODEL]" = None,  # type: ignore
+        field_type: "type[MODEL]" = None,  # type: ignore
         create_unique_index: bool = True,
         **kwargs: Any,
     ) -> None:
